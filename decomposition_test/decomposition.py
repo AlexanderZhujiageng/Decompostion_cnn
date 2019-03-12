@@ -11,13 +11,13 @@ with_strides_model_path ='.strides_model/improvement-{epochs:02d}-{loss:.5f}.hdf
 
 width = 100
 height = 100
-'''
+
 inputs_path = 'inputs.txt'
 outputs_path ='outputs.txt'
 
 X = np.loadtxt(inputs_path,delimiter=',').reshape(len(X),width,height,1)
 y = np.loadtxt(outpus_path,delimiter=',').reshape(len(y),width,height,1)
-'''
+
 
 def conv_model(block_number=20,filter_size=5,strides=1):
     input_layer = Input(shape=(100,100,1))
@@ -42,6 +42,22 @@ pdb.set_trace()
 conv_strides_model.summary()
 
 
+lr = 1e-3
+reduce_lr = ReduceLROnPlateau(factor=0.9,monitor='loss',mode='auto',patience=10,min_lr=1e-9)
+conv_checkpoint = ModelCheckpoint(model_save_path,monitor='loss',mode='auto',save_best_only='True')
+strides_conv_checkpoint = ModelCheckpont(with_strides_model_path,monitor='loss',mode='auto',save_best_onpy='True')
 
-    
+conv_model1.compile(loss='mse',optimizer=Adam(lr=lr))
+conv_model1.fit(X,y,epochs=2000,batch_size=16,verbose=1,
+        callbacks=[reduce_lr,EarlyStopping(monitor='loss',patience='30',mode='auto'),conv_checkpoint])
+
+
+reduce_lr = ReduceLROnPlateau(factor=0.9,monitor='loss',mode='auto',patience=10,min_lr=1e-9)
+conv_strides_model.compile(loss='mse',optimizer=Adam(lr=lr))
+conv_strides_model.fit(X,y,
+        epochs=2000,
+        batch_size=16,
+        verbose=1,
+        callbacks=[reduce_lr,EarlyStopping(monitor='loss',patience=30,mode='auto'),strides_conv_checkpoint])
+
 
